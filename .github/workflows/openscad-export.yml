@@ -1,17 +1,20 @@
-name: OpenSCAD Export to STL
+name: OpenSCAD Export to STL and Auto-Tag
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
 
 jobs:
-  export-stl:
+  export-stl-and-tag:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0  # Fetch all history for all tags and branches
 
     - name: Install OpenSCAD
       run: |
@@ -29,17 +32,20 @@ jobs:
       run: |
         cat stl_files/*.stl > combined.stl
 
-    - name: Upload individual STL files
-      uses: actions/upload-artifact@v2
-      with:
-        name: stl-files
-        path: stl_files/*.stl
+    - name: Generate new tag
+      id: tag_version
+      run: |
+        git fetch --tags
+        latest_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        new_tag=$(echo $latest_tag | awk -F. '{$NF = $NF + 1;} 1' | sed 's/ /./g')
+        echo "NEW_TAG=$new_tag" >> $GITHUB_OUTPUT
 
-    - name: Upload combined STL file
-      uses: actions/upload-artifact@v2
-      with:
-        name: combined-stl
-        path: combined.stl
+    - name: Create and push tag
+      run: |
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git tag ${{ steps.tag_version.outputs.NEW_TAG }}
+        git push origin ${{ steps.tag_version.outputs.NEW_TAG }}
 
     - name: Create Release
       id: create_release
@@ -47,8 +53,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ steps.tag_version.outputs.NEW_TAG }}
+        release_name: Release ${{ steps.tag_version.outputs.NEW_TAG }}
         draft: false
         prerelease: false
 
@@ -61,4 +67,16 @@ jobs:
         asset_path: ./combined.stl
         asset_name: combined.stl
         asset_content_type: model/stl
+
+    - name: Upload individual STL files
+      uses: actions/upload-artifact@v2
+      with:
+        name: stl-files
+        path: stl_files/*.stl
+
+    - name: Upload combined STL file
+      uses: actions/upload-artifact@v2
+      with:
+        name: combined-stl
+        path: combined.stl
 
