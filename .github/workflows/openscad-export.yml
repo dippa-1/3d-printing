@@ -1,0 +1,64 @@
+name: OpenSCAD Export to STL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  export-stl:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install OpenSCAD
+      run: |
+        sudo snap install openscad
+
+    - name: Export SCAD to STL
+      run: |
+        mkdir stl_files
+        for file in *.scad
+        do
+          openscad -o stl_files/${file%.scad}.stl --export-format binstl -D '$fn=200' $file
+        done
+
+    - name: Create combined STL
+      run: |
+        cat stl_files/*.stl > combined.stl
+
+    - name: Upload individual STL files
+      uses: actions/upload-artifact@v2
+      with:
+        name: stl-files
+        path: stl_files/*.stl
+
+    - name: Upload combined STL file
+      uses: actions/upload-artifact@v2
+      with:
+        name: combined-stl
+        path: combined.stl
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./combined.stl
+        asset_name: combined.stl
+        asset_content_type: model/stl
+
