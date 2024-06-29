@@ -1,5 +1,5 @@
 stem_radius_mm = 15;
-plate_radius_mm = 220;
+plate_radius_mm = 110;
 water_hole_radius_mm = 5;
 water_hole_distance_mm = 30;
 water_hole_angle_step = 30;
