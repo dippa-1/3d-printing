@@ -1,9 +1,9 @@
 stem_radius_mm = 15;
+stem_shaft_width_mm = 3;
 plate_radius_mm = 110;
-water_hole_radius_mm = 5;
-water_hole_distance_mm = 30;
-water_hole_angle_step = 30;
-plate_thickness_mm = 1;
+water_hole_radius_mm = 3;
+num_water_holes_cross_axis = 9;
+plate_thickness_mm = 0.4;
 offset = 0;
 
 module plate() {
@@ -17,15 +17,16 @@ module stem_hole() {
 }
 
 module shaft_to_stem_hole() {
-    translate([offset - stem_radius_mm, 0, 0]) {
-        cube([stem_radius_mm*2, plate_radius_mm, plate_thickness_mm]);
+    translate([offset - stem_shaft_width_mm/2, 0, 0]) {
+        cube([stem_shaft_width_mm, plate_radius_mm, plate_thickness_mm]);
     }
 }
 
 module water_holes() {
-    for (radius = [0:water_hole_distance_mm:plate_radius_mm]) {
-        for (phi = [0:water_hole_angle_step:359]) {
-            translate([radius*cos(phi), radius*sin(phi), 0]) {
+    water_hole_distance_mm = (plate_radius_mm*2) / num_water_holes_cross_axis;
+    for (x = [-plate_radius_mm+water_hole_distance_mm/2:water_hole_distance_mm:plate_radius_mm-water_hole_distance_mm/2]) {
+        for (y = [-plate_radius_mm+water_hole_distance_mm/2:water_hole_distance_mm:plate_radius_mm-water_hole_distance_mm/2]) {
+            translate([x, y, 0]) {
                 cylinder(h=plate_thickness_mm, r=water_hole_radius_mm);
             }
         }
