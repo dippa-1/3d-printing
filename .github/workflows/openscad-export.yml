@@ -25,7 +25,7 @@ jobs:
         mkdir stl_files
         for file in *.scad
         do
-          openscad -o stl_files/${file%.scad}.stl --export-format binstl -D '$fn=200' $file
+          openscad -o stl_files/${file%.scad}.stl --export-format binstl -D '$fn=80' $file
         done
 
     - name: Zip STL files
