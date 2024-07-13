@@ -4,7 +4,7 @@ plate_radius_mm = 110;
 water_hole_radius_mm = 3;
 num_water_holes_cross_axis = 9;
 plate_thickness_mm = 0.4;
-offset = 0;
+offset = 10;
 
 module plate() {
     cylinder(h=plate_thickness_mm, r=plate_radius_mm);
